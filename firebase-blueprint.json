@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "Stores profile information for both farmers and consumers.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Unique user ID from Firebase Auth." },
+        "email": { "type": "string", "format": "email" },
+        "name": { "type": "string" },
+        "role": { "type": "string", "enum": ["farmer", "consumer", "admin"] },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "landSize": { "type": "number", "description": "Farmer land size in acres." },
+        "cropTypes": { "type": "array", "items": { "type": "string" }, "description": "Crops the farmer can produce." },
+        "householdSize": { "type": "number", "description": "Consumer household size." },
+        "subscriptionPlan": { "type": "string", "enum": ["free", "premium"] },
+        "language": { "type": "string", "description": "Preferred language code." }
+      },
+      "required": ["uid", "email", "role"]
+    },
+    "Cluster": {
+      "title": "Hyperlocal Cluster",
+      "description": "Groups users within a 5km radius.",
+      "type": "object",
+      "properties": {
+        "clusterId": { "type": "string" },
+        "center": {
+          "type": "object",
+          "properties": {
+            "lat": { "type": "number" },
+            "lng": { "type": "number" }
+          }
+        },
+        "radius": { "type": "number", "description": "Radius in meters (default 5000)." }
+      },
+      "required": ["clusterId", "center"]
+    },
+    "Subscription": {
+      "title": "Consumer Subscription",
+      "description": "Weekly/monthly fresh produce subscription.",
+      "type": "object",
+      "properties": {
+        "subscriptionId": { "type": "string" },
+        "consumerUid": { "type": "string" },
+        "clusterId": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "crop": { "type": "string" },
+              "quantity": { "type": "number" }
+            }
+          }
+        },
+        "frequency": { "type": "string", "enum": ["weekly", "monthly"] },
+        "status": { "type": "string", "enum": ["active", "paused", "cancelled"] }
+      },
+      "required": ["subscriptionId", "consumerUid", "items"]
+    },
+    "Advisory": {
+      "title": "Farmer Advisory",
+      "description": "AI-generated sowing and harvest recommendations.",
+      "type": "object",
+      "properties": {
+        "advisoryId": { "type": "string" },
+        "farmerUid": { "type": "string" },
+        "clusterId": { "type": "string" },
+        "crop": { "type": "string" },
+        "recommendedQuantity": { "type": "number" },
+        "sowingWindow": { "type": "string" },
+        "harvestTimeline": { "type": "string" },
+        "reasoning": { "type": "string", "description": "Explainable AI reasoning." }
+      },
+      "required": ["advisoryId", "farmerUid", "crop"]
+    },
+    "Order": {
+      "title": "Delivery Order",
+      "description": "Tracks the lifecycle of a fresh produce delivery.",
+      "type": "object",
+      "properties": {
+        "orderId": { "type": "string" },
+        "consumerUid": { "type": "string" },
+        "farmerUid": { "type": "string" },
+        "clusterId": { "type": "string" },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "crop": { "type": "string" },
+              "quantity": { "type": "number" }
+            }
+          }
+        },
+        "status": { "type": "string", "enum": ["pending", "harvested", "dispatched", "delivered"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "deliveredAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["orderId", "consumerUid", "status"]
+    }
+  },
+  "firestore": {
+    "/users/{uid}": { "schema": "User", "description": "User profiles." },
+    "/clusters/{clusterId}": { "schema": "Cluster", "description": "Hyperlocal clusters." },
+    "/subscriptions/{subscriptionId}": { "schema": "Subscription", "description": "Consumer subscriptions." },
+    "/advisory/{advisoryId}": { "schema": "Advisory", "description": "Farmer advisories." },
+    "/orders/{orderId}": { "schema": "Order", "description": "Delivery orders." }
+  }
+}

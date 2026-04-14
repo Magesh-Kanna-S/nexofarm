@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    function isAdmin() {
+      return isAuthenticated() && 
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+         (request.auth.token.email == "25mba_masoodullah@kvimis.co.in" && request.auth.token.email_verified == true));
+    }
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.uid is string &&
+             data.email is string &&
+             data.role in ['farmer', 'consumer', 'admin'];
+    }
+
+    // ===============================================================
+    // Collection Rules
+    // ===============================================================
+
+    match /users/{uid} {
+      allow read: if isAuthenticated();
+      allow create: if isOwner(uid) && isValidUser(request.resource.data);
+      allow update: if (isOwner(uid) && isValidUser(request.resource.data) && request.resource.data.role == resource.data.role) || isAdmin();
+    }
+
+    match /clusters/{clusterId} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    match /subscriptions/{subscriptionId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.consumerUid || isAdmin());
+      allow create: if isAuthenticated() && request.auth.uid == request.resource.data.consumerUid;
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.consumerUid || isAdmin());
+      allow delete: if isAuthenticated() && (request.auth.uid == resource.data.consumerUid || isAdmin());
+    }
+
+    match /advisory/{advisoryId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.farmerUid || isAdmin());
+      allow write: if isAdmin();
+    }
+
+    match /orders/{orderId} {
+      allow read: if isAuthenticated() && (request.auth.uid == resource.data.consumerUid || request.auth.uid == resource.data.farmerUid || isAdmin());
+      allow create: if isAdmin();
+      allow update: if isAuthenticated() && (request.auth.uid == resource.data.consumerUid || request.auth.uid == resource.data.farmerUid || isAdmin());
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "SmartFarm Connect",
+  "description": "AI-powered hyperlocal farm-to-consumer platform for demand forecasting, farmer advisory, and direct distribution.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}
